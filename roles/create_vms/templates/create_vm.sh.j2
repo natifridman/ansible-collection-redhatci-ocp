@@ -17,9 +17,20 @@ virt-install \
     --vcpus={{ item.vcpu }} \
     --os-variant=rhel8.3 \
     --os-type linux \
+    {# For backward compatibility, check if network_interfaces exists #}
+    {% if item.network_interfaces is defined %}
     {% for bridge, mac in item.network_interfaces.items() %}
     --network=bridge:{{ bridge }},mac="{{ mac }}" \
     {% endfor %}
+    {% else %}
+    {# Default network for backward compatibility #}
+    --network=network:{{ network_name }}{% if item.mac_address is defined %},mac="{{ item.mac_address }}"{% endif %} \
+    {% if create_vms_additional_networks | length > 0 %}
+    {% for net in create_vms_additional_networks %}
+    --network=network:{{ net.name }} \
+    {% endfor %}
+    {% endif %}
+    {% endif %}
     {% for disk_name, disk_size in item.disks.items() %}
     --disk path={{ images_dir }}/{{ item.name }}_{{ disk_name }}.qcow2,size={{ disk_size }},format=qcow2 \
     {% endfor %}

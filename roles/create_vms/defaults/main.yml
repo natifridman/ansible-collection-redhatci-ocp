@@ -20,6 +20,15 @@ is_on_rhel9: "{{ (ansible_distribution_major_version == '9' and ansible_distribu
 # allowed modes: 'bridge', 'nat', using 'bridge' as default
 create_vms_network_mode: bridge
 
+# define additional networks: a list of dictionaries with name, mode and bridge_name
+create_vms_additional_networks: []
+# Example:
+# create_vms_additional_networks:
+#   - name: "net-{{ cluster_name }}-mgmt"
+#     mode: bridge
+#     bridge_name: virbr1
+#     cidr: 192.168.100.0/24  # only needed for nat mode
+
 # disable secure boot, false by default
 create_vms_disable_secure_boot: false
 

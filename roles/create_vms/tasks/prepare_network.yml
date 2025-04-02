@@ -11,13 +11,42 @@
           - create_vms_network_mode in allowed_vm_network_modes
         fail_msg: "{{ create_vms_network_mode }} is not a supported network mode"
 
-    - name: define network
+    - name: Define main network
       community.libvirt.virt_net:
         name: "{{ network_name }}"
         command: define
         xml: "{{ lookup('template', 'network.xml.j2') }}"
 
-    - name: start network
+    - name: Start main network
       community.libvirt.virt_net:
         name: "{{ network_name }}"
         command: start
+        
+    - name: Validate additional networks configuration
+      when: create_vms_additional_networks | length > 0
+      vars:
+        allowed_vm_network_modes:
+          - bridge
+          - nat
+      assert:
+        that:
+          - item.mode in allowed_vm_network_modes
+          - item.name is defined
+          - item.bridge_name is defined
+        fail_msg: "Network configuration for {{ item.name | default('unnamed network') }} is invalid"
+      loop: "{{ create_vms_additional_networks }}"
+      
+    - name: Define additional networks
+      when: create_vms_additional_networks | length > 0
+      community.libvirt.virt_net:
+        name: "{{ item.name }}"
+        command: define
+        xml: "{{ lookup('template', 'additional_network.xml.j2') }}"
+      loop: "{{ create_vms_additional_networks }}"
+      
+    - name: Start additional networks
+      when: create_vms_additional_networks | length > 0
+      community.libvirt.virt_net:
+        name: "{{ item.name }}"
+        command: start
+      loop: "{{ create_vms_additional_networks }}"
